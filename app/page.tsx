@@ -46,9 +46,44 @@ export default function HomePage() {
 
   const handleStand = () => {
     if (!gameOver) {
-      setStand(true);
-      setGameOver(true);
+      setTimeout(() => {
+        setStand(true);
+      }, 500);
+      dealerHit();
     }
+  };
+
+  const dealerHit = () => {
+    let newDealerHand = [...dealerHand];
+    let newDealerHandValue = dealerHandValue!;
+
+    const hitDealer = () => {
+      const newCard = deck.pop();
+      if (newCard) {
+        newDealerHand.push(newCard);
+        newDealerHandValue = calculateHandValue(newDealerHand);
+        setDealerHand(newDealerHand);
+        setDealerHandValue(newDealerHandValue);
+
+        // Check if dealer busts
+        if (newDealerHandValue > 21) {
+          setGameOver(true);
+          return;
+        }
+
+        // Check if dealer reached 17 or more
+        if (newDealerHandValue >= 17) {
+          setGameOver(true);
+          return;
+        }
+
+        // Continue hitting after 1 second
+        setTimeout(hitDealer, 1500);
+      }
+    };
+
+    // Start hitting after 1 second
+    setTimeout(hitDealer, 1500);
   };
 
   return (
