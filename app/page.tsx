@@ -16,8 +16,8 @@ export default function HomePage() {
   const [dealerHandValue, setDealerHandValue] = useState<number>();
   const [playerHandValue, setPlayerHandValue] = useState<number>();
   const [gameStarted, setGameStarted] = useState(false);
-  const [gameOver, setGameOver] = useState(false);
-  const [stand, setStand] = useState(false);
+  const [gameOver, setGameOver] = useState<boolean>(false);
+  const [stand, setStand] = useState<boolean>(false);
 
   const startGame = () => {
     const deck = shuffleDeck(generateDeck());
@@ -37,9 +37,18 @@ export default function HomePage() {
     if (!gameOver) {
       const newCard = deck.pop();
       if (newCard) {
-        setPlayerHand([...playerHand, newCard]);
+        const newPlayerHand = [...playerHand, newCard];
+        const newPlayerHandValue = calculateHandValue(newPlayerHand);
+        setPlayerHand(newPlayerHand);
         setDeck(deck);
-        setPlayerHandValue(calculateHandValue([...playerHand, newCard]));
+        setPlayerHandValue(newPlayerHandValue);
+
+        // Check if player busts
+        if (newPlayerHandValue > 21) {
+          setGameOver(true);
+          setStand(true);
+          calculateWinner();
+        }
       }
     }
   };
@@ -58,6 +67,13 @@ export default function HomePage() {
     let newDealerHandValue = dealerHandValue!;
 
     const hitDealer = () => {
+      // Check if dealer reached 17 or more
+      if (newDealerHandValue >= 17) {
+        setGameOver(true);
+        calculateWinner();
+        return;
+      }
+
       const newCard = deck.pop();
       if (newCard) {
         newDealerHand.push(newCard);
@@ -68,12 +84,14 @@ export default function HomePage() {
         // Check if dealer busts
         if (newDealerHandValue > 21) {
           setGameOver(true);
+          calculateWinner();
           return;
         }
 
         // Check if dealer reached 17 or more
         if (newDealerHandValue >= 17) {
           setGameOver(true);
+          calculateWinner();
           return;
         }
 
@@ -84,6 +102,20 @@ export default function HomePage() {
 
     // Start hitting after 1 second
     setTimeout(hitDealer, 1500);
+  };
+
+  const calculateWinner = () => {
+    if (playerHandValue! > 21) {
+      return "Dealer Wins!";
+    } else if (dealerHandValue! > 21) {
+      return "Player Wins!";
+    } else if (playerHandValue! > dealerHandValue!) {
+      return "Player Wins!";
+    } else if (dealerHandValue! > playerHandValue!) {
+      return "Dealer Wins!";
+    } else {
+      return "Push!";
+    }
   };
 
   return (
@@ -127,6 +159,9 @@ export default function HomePage() {
             <Button onClick={handleStand}>Stand</Button>
             <Button onClick={startGame}>Play Again</Button>
           </div>
+          {gameOver && (
+            <h2 className="text-2xl text-primary">{calculateWinner()}</h2>
+          )}
         </div>
       ) : (
         <Button onClick={startGame}>Start Game</Button>
