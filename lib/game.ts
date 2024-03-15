@@ -40,7 +40,7 @@ export const useBlackjackGame = (): GameState => {
 
   useEffect(() => {
     calculateWinner();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameOver === true]);
 
   const startBetting = () => {
@@ -64,10 +64,19 @@ export const useBlackjackGame = (): GameState => {
     setPregameState(false);
     setPlayerHandValue(calculateHandValue(newPlayerHand));
     setDealerHandValue(calculateHandValue(newDealerHand));
+
+    // Check if the player has blackjack
+    if (calculateHandValue(newPlayerHand) === 21) {
+      playerStand();
+    }
   };
 
   const playerHit = () => {
     if (!gameOver) {
+      if (playerHandValue! === 21) {
+        playerStand();
+        return;
+      }
       const newCard = deck.pop();
       if (newCard) {
         const newPlayerHand = [...playerHand, newCard];
@@ -79,6 +88,11 @@ export const useBlackjackGame = (): GameState => {
         if (newPlayerHandValue > 21) {
           setGameOver(true);
           setStand(true);
+        }
+
+        if (newPlayerHandValue === 21) {
+          playerStand();
+          return;
         }
       }
     }

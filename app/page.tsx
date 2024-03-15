@@ -64,8 +64,9 @@ export default function HomePage() {
           </div>
           <div className="flex flex-col items-center justify-center gap-y-4">
             <h2 className="text-xl text-primary">
-              Player - ${playerBalance} - Bet: ${bet}
+              Player - ${playerBalance.toFixed(2)}
             </h2>
+            <h3 className="text-lg text-primary">Bet: ${bet}</h3>
             <h3 className="text-primary">{playerHandValue ?? 0}</h3>
             <div className="flex flex-wrap gap-2">
               {pregameState ? (
@@ -83,10 +84,10 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex gap-x-4">
-            <Button disabled={pregameState} onClick={playerHit}>
+            <Button disabled={pregameState || gameOver} onClick={playerHit}>
               Hit
             </Button>
-            <Button disabled={pregameState} onClick={playerStand}>
+            <Button disabled={pregameState || gameOver} onClick={playerStand}>
               Stand
             </Button>
           </div>
