@@ -10,11 +10,9 @@ import { Button } from "@/components/ui/button";
 export default function HomePage() {
   const {
     dealerHand,
-    playerHand,
-    playerHand2,
+    playerHands,
     dealerHandValue,
     playerHandValue,
-    playerHandValue2,
     gameStarted,
     gameOver,
     stand,
@@ -31,6 +29,7 @@ export default function HomePage() {
     placeBet,
     playerDoubleDown,
     playerSplit,
+    handIndex
   } = useBlackjackGame();
 
   return (
@@ -48,15 +47,16 @@ export default function HomePage() {
             bet={bet}
             gameOver={gameOver}
             playerBalance={playerBalance}
-            playerDoubleDown={playerDoubleDown}
-            playerHand={playerHand}
+            playerDoubleDown={() => playerDoubleDown(handIndex)}
+            playerHands={playerHands}
             playerHandValue={playerHandValue}
-            playerHit={playerHit}
-            playerSplit={playerSplit}
-            playerStand={playerStand}
+            playerHit={() => playerHit(handIndex)}
+            playerSplit={() => playerSplit(handIndex)}
+            playerStand={ () => playerStand(handIndex)}
             pregameState={pregameState}
             split={split}
             stand={stand}
+            handIndex={handIndex}
           />
           {pregameState && (
             <Bet

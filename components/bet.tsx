@@ -1,6 +1,6 @@
 import { Button } from "./ui/button";
 
-interface BetProps {
+export interface BetProps {
   pregameState: boolean;
   bet: number;
   playerBalance: number;

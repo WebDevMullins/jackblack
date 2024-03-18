@@ -1,20 +1,16 @@
 import { useEffect, useState } from "react";
 
-import {
-  CardProps,
-  generateFourDecks,
-  shuffleDeck,
-} from "@/app/deck";
+import { CardProps, generateFourDecks, shuffleDeck } from "@/app/deck";
 import calculateHandValue from "./calculateHandValue";
+
+const TESTING = true;
 
 export interface GameState {
   deck: CardProps[];
   dealerHand: CardProps[];
-  playerHand: CardProps[];
-  playerHand2: CardProps[];
+  playerHands: { cards: CardProps[]; value: number | undefined }[];
   dealerHandValue: number | undefined;
   playerHandValue: number | undefined;
-  playerHandValue2: number | undefined;
   gameStarted: boolean;
   gameOver: boolean;
   stand: boolean;
@@ -25,32 +21,36 @@ export interface GameState {
   split: boolean;
   startBetting: () => void;
   startGame: () => void;
-  playerHit: () => void;
-  playerStand: () => void;
-  calculateWinner: (bet: number) => string;
+  playerHit: (index: number) => void;
+  playerStand: (index: number) => void;
+  calculateWinner: () => string;
   placeBet: (bet: number) => void;
-  playerDoubleDown: () => void;
-  playerSplit: () => void;
+  playerDoubleDown: (index: number) => void;
+  playerSplit: (index: number) => void;
+  handIndex: number;
 }
 
 export const useBlackjackGame = (): GameState => {
   const [deck, setDeck] = useState<CardProps[]>([]);
   const [dealerHand, setDealerHand] = useState<CardProps[]>([]);
-  const [playerHand, setPlayerHand] = useState<CardProps[]>([]);
-  const [playerHand2, setPlayerHand2] = useState<CardProps[]>([]);
+  const [playerHands, setPlayerHands] = useState<
+    {
+      cards: CardProps[];
+      value: number | undefined;
+    }[]
+  >([]);
   const [dealerHandValue, setDealerHandValue] = useState<number>();
   const [playerHandValue, setPlayerHandValue] = useState<number>();
-  const [playerHandValue2, setPlayerHandValue2] = useState<number>();
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [stand, setStand] = useState<boolean>(false);
   const [bet, setBet] = useState<number>(0);
-  const [betHand2, setBetHand2] = useState<number>(0);
   const [playerBalance, setPlayerBalance] = useState<number>(100);
   const [pregameState, setPregameState] = useState<boolean>(true);
   const [outcome, setOutcome] = useState<string>("");
   const [doubledDown, setDoubledDown] = useState<boolean>(false);
   const [split, setSplit] = useState<boolean>(false);
+  const [handIndex, setHandIndex] = useState<number>(0);
 
   useEffect(() => {
     calculateWinner();
@@ -68,70 +68,78 @@ export const useBlackjackGame = (): GameState => {
   };
 
   const startGame = () => {
-    const newDeck = shuffleDeck(generateFourDecks());
-    const newPlayerHand = [newDeck.pop()!, newDeck.pop()!];
-    const newDealerHand = [newDeck.pop()!, newDeck.pop()!];
-    setDeck(newDeck);
-    setPlayerHand(newPlayerHand);
-    setDealerHand(newDealerHand);
-    setGameStarted(true);
-    setPregameState(false);
-    setPlayerHandValue(calculateHandValue(newPlayerHand));
-    setDealerHandValue(calculateHandValue(newDealerHand));
+    setHandIndex(0);
+    if (TESTING) {
+      const testingPlayerHand: CardProps[] = [
+        { suit: "Hearts", value: "Ace" },
+        { suit: "Hearts", value: "Ace" },
+      ];
+      const testingDealerHand: CardProps[] = [
+        { suit: "Hearts", value: 2 },
+        { suit: "Hearts", value: 3 },
+      ];
+      setDeck(shuffleDeck(generateFourDecks()));
+      setPlayerHands([
+        {
+          cards: testingPlayerHand,
+          value: calculateHandValue(testingPlayerHand),
+        },
+      ]);
+      setDealerHand(testingDealerHand);
+      setGameStarted(true);
+      setPregameState(false);
+      setPlayerHandValue(calculateHandValue(testingPlayerHand));
+      setDealerHandValue(calculateHandValue(testingDealerHand));
 
-    // Check if the player has blackjack
-    if (calculateHandValue(newPlayerHand) === 21) {
-      playerStand();
+      // Check if the player has blackjack
+      if (calculateHandValue(testingPlayerHand) === 21) {
+        playerStand(0);
+      }
+    } else {
+      const newDeck = shuffleDeck(generateFourDecks());
+      const newPlayerHand = [newDeck.pop()!, newDeck.pop()!];
+      const newDealerHand = [newDeck.pop()!, newDeck.pop()!];
+      setDeck(newDeck);
+      setPlayerHands([
+        { cards: newPlayerHand, value: calculateHandValue(newPlayerHand) },
+      ]);
+      setDealerHand(newDealerHand);
+      setGameStarted(true);
+      setPregameState(false);
+      setPlayerHandValue(calculateHandValue(newPlayerHand));
+      setDealerHandValue(calculateHandValue(newDealerHand));
+
+      // Check if the player has blackjack
+      if (calculateHandValue(newPlayerHand) === 21) {
+        playerStand(0);
+      }
     }
   };
 
-  const playerHit = () => {
+  const playerHit = (index: number) => {
     if (!gameOver) {
-      if (
-        (playerHandValue! === 21 && !split) ||
-        (playerHandValue2! === 21 && split)
-      ) {
-        playerStand();
-        return;
-      }
       const newCard = deck.pop();
       if (newCard) {
-        if (!split) {
-          const newPlayerHand = [...playerHand, newCard];
-          const newPlayerHandValue = calculateHandValue(newPlayerHand);
-          setPlayerHand(newPlayerHand);
-          setDeck(deck);
-          setPlayerHandValue(newPlayerHandValue);
-          if (newPlayerHandValue > 21) {
-            if (split) {
-              playerStand();
-            } else {
-              setGameOver(true);
-              setStand(true);
-            }
-          }
-          if (newPlayerHandValue === 21) {
-            playerStand();
-          }
-        } else {
-          const newPlayerHand2 = [...playerHand2, newCard];
-          const newPlayerHandValue2 = calculateHandValue(newPlayerHand2);
-          setPlayerHand2(newPlayerHand2);
-          setDeck(deck);
-          setPlayerHandValue2(newPlayerHandValue2);
-          if (newPlayerHandValue2 > 21) {
-            setGameOver(true);
-            setStand(true);
-          }
-          if (newPlayerHandValue2 === 21) {
-            playerStand();
-          }
+        const updatedPlayerHands = [...playerHands];
+        updatedPlayerHands[handIndex].cards.push(newCard);
+        updatedPlayerHands[handIndex].value = calculateHandValue(
+          updatedPlayerHands[handIndex].cards,
+        );
+        setDeck(deck);
+        setPlayerHands(updatedPlayerHands);
+        setHandIndex(index);
+        if (updatedPlayerHands[handIndex].value! > 21) {
+          setGameOver(true);
+          setStand(true);
+        }
+
+        if (updatedPlayerHands[handIndex].value === 21) {
+          playerStand(handIndex);
         }
       }
     }
   };
-
-  const playerStand = () => {
+  const playerStand = (index: number) => {
     if (!gameOver) {
       if (!split) {
         setTimeout(() => {
@@ -145,10 +153,7 @@ export const useBlackjackGame = (): GameState => {
         setTimeout(() => {
           setStand(true);
         }, 500);
-        if (!stand && playerHandValue2 !== 21) {
-          setDoubledDown(false);
-          dealerHit();
-        }
+        setHandIndex(index + 1);
       }
     }
   };
@@ -193,91 +198,103 @@ export const useBlackjackGame = (): GameState => {
     setPlayerBalance(playerBalance - bet);
   };
 
-  const playerDoubleDown = () => {
-    if (
-      !gameOver &&
-      !stand &&
-      !doubledDown &&
-      ((playerHand.length === 2 && !split) ||
-        (playerHand2.length === 2 && split))
-    ) {
+  const playerDoubleDown = (index: number) => {
+    if (!gameOver && !stand && !doubledDown) {
+      setHandIndex(index);
       if (playerBalance >= bet) {
         setBet(bet * 2);
         setPlayerBalance(playerBalance - bet);
-        playerHit();
-        playerStand();
+        playerHit(handIndex);
+        playerStand(handIndex);
       } else {
         alert("You don't have enough money to double down!");
       }
     }
   };
 
-  const playerSplit = () => {
+  const playerSplit = (index: number) => {
     if (
       !gameOver &&
-      playerHand.length === 2 &&
-      playerHand[0].value === playerHand[1].value &&
+      playerHands.length === 1 &&
+      playerHands[0].cards.length === 2 &&
+      playerHands[0].cards[0].value === playerHands[0].cards[1].value &&
       playerBalance >= bet
     ) {
-      const newPlayerHand = [playerHand[0], deck.pop()!];
-      const newPlayerHand2 = [playerHand[1], deck.pop()!];
-      setSplit(true);
-      setPlayerHand(newPlayerHand);
-      setPlayerHand2(newPlayerHand2);
-      setPlayerHandValue(calculateHandValue(newPlayerHand));
-      setPlayerHandValue2(calculateHandValue(newPlayerHand2));
-      setPlayerBalance(playerBalance - bet);
-      setBetHand2(bet * 2);
+      const newDeck = [...deck];
+      const firstCard = newDeck.pop();
+      const secondCard = newDeck.pop();
+
+      if (firstCard && secondCard) {
+        const newPlayerHands = [
+          {
+            cards: [playerHands[handIndex].cards[0], firstCard],
+            value: calculateHandValue([
+              playerHands[handIndex].cards[0],
+              firstCard,
+            ]),
+          },
+          {
+            cards: [playerHands[handIndex].cards[1], secondCard],
+            value: calculateHandValue([
+              playerHands[handIndex].cards[1],
+              secondCard,
+            ]),
+          },
+        ];
+
+        setPlayerHands(newPlayerHands);
+        setDeck(newDeck);
+        setPlayerBalance(playerBalance - bet);
+        setSplit(true);
+        setHandIndex(index);
+      }
     }
   };
 
   const calculateWinner = () => {
     let result = "";
     setOutcome(""); // Clear previous outcome
+
+    const playerHandValue =
+      playerHands.length > 0 ? playerHands[handIndex].value : undefined;
+
+    // Calculate player balance based on the current balance
     setPlayerBalance((playerBalance) => {
       let newPlayerBalance = playerBalance; // Initialize with previous balance
-      if (!split || (split && !stand)) {
-        if (playerHandValue! > 21) {
-          result = "Dealer Wins!";
-        } else if (playerHandValue! === 21 && playerHand.length === 2) {
-          result = "JackBlack!";
-          newPlayerBalance += bet * 2.5; // Add 2.5 times the bet to balance
-        } else if (dealerHandValue! === 21 && dealerHand.length === 2) {
-          result = "Dealer JackBlack!";
-        } else if (dealerHandValue! > 21) {
-          result = "Player Wins!";
-          newPlayerBalance += bet * 2; // Double the bet and add to balance
-        } else if (playerHandValue! > dealerHandValue!) {
-          result = "Player Wins!";
-          newPlayerBalance += bet * 2; // Double the bet and add to balance
-        } else if (dealerHandValue! > playerHandValue!) {
-          result = "Dealer Wins!";
-        } else {
-          result = "Push!";
-          newPlayerBalance += bet; // Return the bet to the player
-        }
+
+      if (playerHandValue === undefined) {
+        // Handle the case when player hand value is undefined
+        result = "No player hand available";
+      } else if (dealerHandValue === undefined) {
+        // Handle the case when dealer hand value is undefined
+        result = "No dealer hand available";
+      } else if (playerHandValue > 21) {
+        result = "Dealer Wins!";
+      } else if (
+        playerHandValue === 21 &&
+        playerHands[handIndex].cards.length === 2
+      ) {
+        result = "JackBlack!";
+        newPlayerBalance += bet * 2.5; // Add 2.5 times the bet to balance
+      } else if (dealerHandValue === 21 && dealerHand.length === 2) {
+        result = "Dealer JackBlack!";
+      } else if (dealerHandValue > 21) {
+        result = "Player Wins!";
+        newPlayerBalance += bet * 2; // Double the bet and add to balance
+      } else if (playerHandValue > dealerHandValue) {
+        result = "Player Wins!";
+        newPlayerBalance += bet * 2; // Double the bet and add to balance
+      } else if (dealerHandValue > playerHandValue) {
+        result = "Dealer Wins!";
       } else {
-        if (playerHandValue2! > 21) {
-          result += "Dealer Wins!";
-        } else if (playerHandValue2! === 21 && playerHand2.length === 2) {
-          result += "JackBlack!";
-          newPlayerBalance += bet * 2.5; // Add 2.5 times the bet to balance
-        } else if (dealerHandValue! > 21) {
-          result += "Player Wins!";
-          newPlayerBalance += bet * 2; // Double the bet and add to balance
-        } else if (playerHandValue2! > dealerHandValue!) {
-          result += "Player Wins!";
-          newPlayerBalance += bet * 2; // Double the bet and add to balance
-        } else if (dealerHandValue! > playerHandValue2!) {
-          result += "Dealer Wins!";
-        } else {
-          result += "Push!";
-          newPlayerBalance += bet; // Return the bet to the player
-        }
+        result = "Push!";
+        newPlayerBalance += bet; // Return the bet to the player
       }
+
       setOutcome(result); // Update outcome state
       return newPlayerBalance; // Return the updated balance
     });
+
     return result;
   };
 
@@ -286,23 +303,20 @@ export const useBlackjackGame = (): GameState => {
     setGameOver(false);
     setStand(false);
     setDealerHand([]);
-    setPlayerHand([]);
-    setPlayerHand2([]);
+    setPlayerHands([]);
     setDealerHandValue(undefined);
     setPlayerHandValue(undefined);
-    setPlayerHandValue2(undefined);
     setSplit(false);
     setBet(0);
+    setHandIndex(0);
   };
 
   return {
     deck,
     dealerHand,
-    playerHand,
-    playerHand2,
+    playerHands,
     dealerHandValue,
     playerHandValue,
-    playerHandValue2,
     gameStarted,
     gameOver,
     stand,
@@ -319,5 +333,6 @@ export const useBlackjackGame = (): GameState => {
     placeBet,
     playerDoubleDown,
     playerSplit,
+    handIndex,
   };
 };

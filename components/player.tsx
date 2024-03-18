@@ -1,21 +1,21 @@
-import Card from "@/app/card";
 import CardBack from "@/app/card-back";
 import { CardProps } from "@/app/deck";
-import { Button } from "./ui/button";
+import PlayerHands from "./player-hands";
 
 interface PlayerProps {
   bet: number;
   gameOver: boolean;
   playerBalance: number;
-  playerDoubleDown: () => void;
-  playerHand: CardProps[];
+  playerDoubleDown: (handIndex: number) => void;
+  playerHands: { cards: CardProps[]; value: number | undefined }[];
   playerHandValue: number | undefined;
-  playerHit: () => void;
-  playerSplit: () => void;
-  playerStand: () => void;
+  playerHit: (handIndex: number) => void;
+  playerSplit: (handIndex: number) => void;
+  playerStand: (handIndex: number) => void;
   split: boolean;
   stand: boolean;
   pregameState: boolean;
+  handIndex: number;
 }
 
 const Player = ({
@@ -23,14 +23,14 @@ const Player = ({
   gameOver,
   playerBalance,
   playerDoubleDown,
-  playerHand,
-  playerHandValue,
+  playerHands,
   playerHit,
   playerSplit,
   playerStand,
   split,
   stand,
   pregameState,
+  handIndex,
 }: PlayerProps) => {
   return (
     <div className="flex flex-col items-center justify-center gap-y-4">
@@ -39,7 +39,6 @@ const Player = ({
       </h2>
 
       <h3 className="text-lg text-primary">Bet: ${bet}</h3>
-      <h3 className="text-primary">{playerHandValue ?? 0}</h3>
       <div className="flex flex-wrap gap-2">
         {pregameState ? (
           <>
@@ -47,56 +46,21 @@ const Player = ({
             <CardBack />
           </>
         ) : (
-          <div className="flex flex-col gap-y-24">
-            <div className="flex justify-center gap-x-2">
-              {playerHand.map((card, index) => (
-                <Card key={index} suit={card.suit} value={card.value} />
-              ))}
-            </div>
-            {/* {split &&
-                    playerHand2.map((card, index) => (
-                      <Card key={index} suit={card.suit} value={card.value} />
-                    ))} */}
-
-            <div className="flex gap-x-4">
-              <Button
-                disabled={pregameState || gameOver || stand}
-                onClick={playerHit}
-              >
-                Hit
-              </Button>
-              <Button
-                disabled={pregameState || gameOver || stand}
-                onClick={playerStand}
-              >
-                Stand
-              </Button>
-              <Button
-                disabled={
-                  pregameState ||
-                  gameOver ||
-                  stand ||
-                  playerHand.length > 2 ||
-                  playerBalance < bet
-                }
-                onClick={playerDoubleDown}
-              >
-                Double Down
-              </Button>
-              <Button
-                disabled={
-                  pregameState ||
-                  gameOver ||
-                  playerHand.length > 2 ||
-                  playerHand[0].value !== playerHand[1].value ||
-                  playerBalance < bet
-                }
-                onClick={playerSplit}
-              >
-                Split
-              </Button>
-            </div>
-          </div>
+          <>
+            <PlayerHands
+              bet={bet}
+              gameOver={gameOver}
+              playerBalance={playerBalance}
+              playerDoubleDown={() => playerDoubleDown(handIndex)}
+              playerHands={playerHands}
+              playerHit={() => playerHit(handIndex)}
+              playerSplit={() => playerSplit(handIndex)}
+              playerStand={() => playerStand(handIndex)}
+              pregameState={pregameState}
+              stand={stand}
+              handIndex={handIndex}
+            />
+          </>
         )}
       </div>
     </div>
