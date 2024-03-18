@@ -21,7 +21,7 @@ export interface CardProps {
 }
 
 // Create a function to generate a deck of cards
-export function generateDeck(): CardProps[] {
+function generateDeck(): CardProps[] {
   const suits: Suit[] = ["Hearts", "Diamonds", "Clubs", "Spades"];
   const values: Value[] = [
     2,
@@ -47,6 +47,11 @@ export function generateDeck(): CardProps[] {
   });
 
   return deck;
+}
+
+export const generateFourDecks = (): CardProps[] => {
+  const deck = generateDeck();
+  return [...deck, ...deck, ...deck, ...deck];
 }
 
 export function shuffleDeck(deck: CardProps[]): CardProps[] {
