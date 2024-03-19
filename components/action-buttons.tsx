@@ -28,7 +28,6 @@ const ActionButtons = ({
   playerHand,
   handIndex,
 }: ActionButtonsProps) => {
-	console.log(handIndex, playerHand.length)
   return (
     <div className="flex gap-x-4">
       <Button

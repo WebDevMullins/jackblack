@@ -69,7 +69,7 @@ export default function HomePage() {
           )}
           {gameOver && (
             <div className="flex flex-col justify-center gap-y-4">
-              <h2 className="text-center text-2xl text-primary">{outcome}</h2>
+              {/* <h2 className="text-center text-2xl text-primary">{outcome}</h2> */}
               <Button onClick={startBetting}>Play Again</Button>
             </div>
           )}

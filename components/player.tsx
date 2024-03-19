@@ -1,5 +1,6 @@
 import CardBack from "@/app/card-back";
 import { CardProps } from "@/app/deck";
+import ActionButtons from "./action-buttons";
 import PlayerHands from "./player-hands";
 
 interface PlayerProps {
@@ -7,7 +8,12 @@ interface PlayerProps {
   gameOver: boolean;
   playerBalance: number;
   playerDoubleDown: (handIndex: number) => void;
-  playerHands: { cards: CardProps[]; value: number | undefined }[];
+  playerHands: {
+    cards: CardProps[];
+    value: number | undefined;
+    state: string;
+    outcome: string | undefined;
+  }[];
   playerHandValue: number | undefined;
   playerHit: (handIndex: number) => void;
   playerSplit: (handIndex: number) => void;
@@ -46,7 +52,7 @@ const Player = ({
             <CardBack />
           </>
         ) : (
-          <>
+          <div className="flex flex-col gap-y-8">
             <PlayerHands
               bet={bet}
               gameOver={gameOver}
@@ -60,7 +66,22 @@ const Player = ({
               stand={stand}
               handIndex={handIndex}
             />
-          </>
+            <div className="flex gap-x-4">
+              <ActionButtons
+                bet={bet}
+                gameOver={gameOver}
+                playerBalance={playerBalance}
+                playerDoubleDown={() => playerDoubleDown(handIndex)}
+                playerHand={playerHands[handIndex].cards}
+                playerHit={() => playerHit(handIndex)}
+                playerSplit={() => playerSplit(handIndex)}
+                playerStand={() => playerStand(handIndex)}
+                pregameState={pregameState}
+                stand={stand}
+                handIndex={handIndex}
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>
