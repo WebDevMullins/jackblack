@@ -29,7 +29,12 @@ export default function HomePage() {
     placeBet,
     playerDoubleDown,
     playerSplit,
-    handIndex
+    insuranceAvailable,
+    insurancePlaced,
+    insuranceOutcome,
+    placeInsuranceBet,
+    setInsuranceAvailable,
+    handIndex,
   } = useBlackjackGame();
 
   return (
@@ -52,7 +57,7 @@ export default function HomePage() {
             playerHandValue={playerHandValue}
             playerHit={() => playerHit(handIndex)}
             playerSplit={() => playerSplit(handIndex)}
-            playerStand={ () => playerStand(handIndex)}
+            playerStand={() => playerStand(handIndex)}
             pregameState={pregameState}
             split={split}
             stand={stand}
@@ -67,12 +72,32 @@ export default function HomePage() {
               startGame={startGame}
             />
           )}
+          {insuranceAvailable && (
+            <div className="flex flex-col justify-center gap-y-4">
+              <h2 className="text-center text-2xl text-primary">
+                Would you like to buy insurance?
+              </h2>
+              <Button onClick={placeInsuranceBet}>Yes</Button>
+              <Button
+                onClick={() => setInsuranceAvailable(!insuranceAvailable)}
+              >
+                No
+              </Button>
+            </div>
+          )}
           {gameOver && (
             <div className="flex flex-col justify-center gap-y-4">
-              {/* <h2 className="text-center text-2xl text-primary">{outcome}</h2> */}
+              <h2 className="text-center text-2xl text-primary">
+                {insuranceOutcome}
+              </h2>
               <Button onClick={startBetting}>Play Again</Button>
             </div>
           )}
+          {/* {gameOver && (
+            <div className="flex flex-col justify-center gap-y-4">
+              <Button onClick={startBetting}>Play Again</Button>
+            </div>
+          )} */}
         </div>
       ) : (
         <Button onClick={startBetting}>Start Game</Button>

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { CardProps, generateFourDecks, shuffleDeck } from "@/app/deck";
 import calculateHandValue from "./calculateHandValue";
 
-const TESTING = true;
+const TESTING = false;
 
 export interface GameState {
   deck: CardProps[];
@@ -33,6 +33,12 @@ export interface GameState {
   playerDoubleDown: (index: number) => void;
   playerSplit: (index: number) => void;
   handIndex: number;
+  resolveInsurance: () => void;
+  placeInsuranceBet: () => void;
+  setInsuranceAvailable: (insuranceAvailable: boolean) => void;
+  insuranceAvailable: boolean;
+  insurancePlaced: boolean;
+  insuranceOutcome: string;
 }
 
 export const useBlackjackGame = (): GameState => {
@@ -58,6 +64,9 @@ export const useBlackjackGame = (): GameState => {
   const [doubledDown, setDoubledDown] = useState<boolean>(false);
   const [split, setSplit] = useState<boolean>(false);
   const [handIndex, setHandIndex] = useState<number>(0);
+  const [insuranceAvailable, setInsuranceAvailable] = useState(false);
+  const [insurancePlaced, setInsurancePlaced] = useState(false);
+  const [insuranceOutcome, setInsuranceOutcome] = useState("");
 
   const isGameOver =
     gameOver === true && playerHands.every((hand) => hand.state === "stand");
@@ -66,6 +75,18 @@ export const useBlackjackGame = (): GameState => {
     calculateWinner();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGameOver]);
+
+  // Check for insurance when the dealer's face-up card is an Ace
+  useEffect(() => {
+    if (
+      dealerHand.length === 2 &&
+      dealerHand[0].value === "Ace" &&
+      playerBalance >= bet / 2
+    ) {
+      setInsuranceAvailable(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealerHand]);
 
   const startBetting = () => {
     if (playerBalance > 0) {
@@ -85,8 +106,8 @@ export const useBlackjackGame = (): GameState => {
         { suit: "Hearts", value: "Ace" },
       ];
       const testingDealerHand: CardProps[] = [
-        { suit: "Hearts", value: 2 },
-        { suit: "Hearts", value: 3 },
+        { suit: "Hearts", value: "Ace" },
+        { suit: "Hearts", value: 9 },
       ];
       setDeck(shuffleDeck(generateFourDecks()));
       setPlayerHands([
@@ -185,7 +206,6 @@ export const useBlackjackGame = (): GameState => {
           if (playerHands.every((hand) => hand.state === "stand")) {
             setStand(true);
             dealerHit();
-            // setGameOver(true);
           }
         }, 500);
         if (index !== playerHands.length - 1) {
@@ -327,11 +347,41 @@ export const useBlackjackGame = (): GameState => {
         handResults.push(result); // Store the result for each hand
         playerHands[index].outcome = result; // Update outcome for each hand
       });
+      if (insurancePlaced) {
+        resolveInsurance();
+      }
     }
 
     setOutcome(handResults.toString()); // Update outcome state with all hand results
 
     return result;
+  };
+
+  // Handle insurance bet placement
+  const placeInsuranceBet = () => {
+    if (insuranceAvailable && !insurancePlaced) {
+      // Deduct insurance bet from player's balance
+      const insuranceBetAmount = bet / 2; // Typically, insurance bet is half of the original bet
+      setBet((prevBet) => prevBet + insuranceBetAmount);
+      setPlayerBalance((prevBalance) => prevBalance - insuranceBetAmount);
+      setInsurancePlaced(true);
+      setInsuranceAvailable(false);
+    }
+  };
+
+  // Resolve insurance bet
+  const resolveInsurance = () => {
+    if (dealerHandValue === 21 && dealerHand.length === 2 && insurancePlaced) {
+      // Dealer has blackjack, pay out insurance bets at 2:1 odds
+      const insurancePayout = bet; // Assuming insurance pays 2:1
+      setPlayerBalance((prevBalance) => prevBalance + insurancePayout);
+      setInsuranceOutcome("Insurance won!");
+    } else {
+      // Dealer does not have blackjack, collect insurance bets
+      setInsuranceOutcome("Insurance lost!");
+    }
+    setInsurancePlaced(false);
+    setInsuranceAvailable(false);
   };
 
   const resetGame = () => {
@@ -345,6 +395,10 @@ export const useBlackjackGame = (): GameState => {
     setSplit(false);
     setBet(0);
     setHandIndex(0);
+    setDoubledDown(false);
+    setInsurancePlaced(false);
+    setInsuranceOutcome("");
+    setInsuranceAvailable(false);
   };
 
   return {
@@ -370,5 +424,11 @@ export const useBlackjackGame = (): GameState => {
     playerDoubleDown,
     playerSplit,
     handIndex,
+    resolveInsurance,
+    placeInsuranceBet,
+    setInsuranceAvailable,
+    insuranceAvailable,
+    insurancePlaced,
+    insuranceOutcome,
   };
 };
